@@ -17,7 +17,7 @@ Then, generate HTML file with graphs:
 python celerograph.py benchmark_cpp_sort.csv
 ```
 
-See the *example* directory for sample HTML output.
+See the [example](https://mloskot.github.io/pycelerograph/example/) for sample HTML output.
 
 ## Features
 
