@@ -1,7 +1,7 @@
 # pycelerograph
 
-Python utility to generate pretty [Bokeh](http://bokeh.pydata.org/) graphs
-from [Celero](https://github.com/DigitalInBlue/Celero) benchmark results.
+Python utility to convert [Celero](https://github.com/DigitalInBlue/Celero) benchmark
+results to pretty [Bokeh](http://bokeh.pydata.org/) graphs.
 
 ## Quickstart
 
@@ -16,6 +16,8 @@ Then, generate HTML file with graphs:
 ```
 python celerograph.py benchmark_cpp_sort.csv
 ```
+
+See the *example* directory for sample HTML output.
 
 ## Features
 
@@ -39,3 +41,9 @@ python celerograph.py benchmark_cpp_sort.csv
 This is free and unencumbered software released into the public domain.
 
 http://unlicense.org
+
+## Credits
+
+* [John Farrier](https://github.com/DigitalInBlue/) for the Celero benchmarking library.
+* [Bryan Van de Ven](https://github.com/bryevdv) for Bokeh discovery.
+* [lexicalunit](https://github.com/lexicalunit) for [linking](https://github.com/lexicalunit/nanodbc/pull/258) me with Bryan.
