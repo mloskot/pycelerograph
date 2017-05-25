@@ -1,12 +1,21 @@
 """
-pycelerograph
-
-Creates pretty reports with Bokeh graphs from Celero benchmark
-results generated in CSV files.
+pycelerograph - generates pretty Bokeh graphs from Celero benchmark results.
 
 Source: https://github.com/mloskot/pycelerograph
 Author: Mateusz Loskot <mateusz@loskot.net>
 License: http://unlicense.org
+
+Creates pretty reports with Bokeh graphs from Celero benchmark
+results generated in CSV files.
+
+The script reads all CSV files in given directory or given single file
+and converts to HTML with slick'n'sweet graphs using Bokeh.
+
+Typically, each CSV file contains single benchmark group of data.
+If a file is merges multiple groups, then multiple HTML reports
+are generted, one for each group.
+
+The script does not merge any reports.
 """
 import csv
 import os
@@ -130,7 +139,7 @@ def plot_measure(group_name, experiments, measure):
     return plot
 
 
-def generate_html_report(data, filename_prefix='celero_benchmark'):
+def generate_html(data, filename_prefix='celero_benchmark'):
     """Plots graphs with benchmark results."""
     assert data
 
@@ -150,26 +159,26 @@ def generate_html_report(data, filename_prefix='celero_benchmark'):
         show(gridplot(plots, ncols=2, plot_width=600, plot_height=300))
         reset_output()
 
-def main(csv_dir=None, csv_file=None):
-    """Process CSV files into slick'n'sweet report with graphs."""
-    csv_files = []
-    if csv_file:
-        csv_files.append(csv_file)
-    if csv_dir:
-        csv_files.extend([os.path.join(csv_dir, f)
-                          for f in os.listdir(csv_dir) if f.endswith('.csv')])
+def generate_reports(csv_files):
+    """Converts CSV reports in the list to HTML reports."""
+    for csv_file in csv_files:
+        data = read_results(csv_file)
+        generate_html(data)
 
-    for filename in csv_files:
-        data = read_results(filename)
-        generate_html_report(data)
+def main(csv_path):
+    """Processing entry point."""
+    if os.path.isdir(csv_path):
+        csv_dir = csv_path
+        csv_files = [os.path.join(csv_dir, f)
+                     for f in os.listdir(csv_dir) if f.endswith('.csv')]
+    elif sys.argv[1].endswith('.csv') and os.path.isfile(sys.argv[1]):
+        csv_files = [csv_path]
+    else:
+        sys.exit("'{0}' does not exist".format(sys.argv[1]))
+    generate_reports(csv_files)
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        sys.exit(
-            'Usage: {0} <directory with benchmark .csv files>'.format(__file__))
-    if os.path.isdir(sys.argv[1]):
-        main(csv_dir=sys.argv[1])
-    elif sys.argv[1].endswith('.csv') and os.path.isfile(sys.argv[1]):
-        main(csv_file=sys.argv[1])
+        sys.exit("Usage: '{0}' <directory with benchmark .csv files>".format(__file__))
     else:
-        sys.exit('\'{0}\' does not exist'.format(sys.argv[1]))
+        main(sys.argv[1])
