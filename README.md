@@ -26,6 +26,7 @@ See the [example](https://mloskot.github.io/pycelerograph/example/) for sample H
 * Processes single CSV file or all CSV files in directory.
 * Can also process single concatenated CSV file with multiple benchmark groups.
 * Plots six graphs for the Celero measurements: *Baseline*, *us/Iteration*, *Iterations/sec*, *Min (us)*, *Max (us)*, *Mean (us)*.
+* Plots the graphs in 2x3 grid layout.
 * Plots bar charts only.
 * Adds single [Bokeh toolbar](http://bokeh.pydata.org/en/latest/docs/user_guide/tools.html) at the top of HTML page.
 * Is dead simple to modify, customise and extend.
