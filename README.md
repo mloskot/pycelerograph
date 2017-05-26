@@ -5,6 +5,10 @@ results to pretty [Bokeh](http://bokeh.pydata.org/) graphs.
 
 ## Quickstart
 
+```
+pip install -r requirements.txt
+```
+
 Once you have built Celero runner for your benchmark, generate CSV report:
 
 ```
