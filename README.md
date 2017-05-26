@@ -15,7 +15,7 @@ Once you have built Celero runner for your benchmark, generate CSV report:
 benchmark_cpp_sort -t benchmark_cpp_sort.csv
 ```
 
-Then, generate HTML file with graphs:
+Then, generate HTML files with graphs in the current directory:
 
 ```
 python celerograph.py benchmark_cpp_sort.csv
@@ -26,13 +26,14 @@ See the [example](https://mloskot.github.io/pycelerograph/example/) for sample H
 ## Features
 
 * Reads [Celero report in CSV](https://github.com/DigitalInBlue/Celero/blob/master/README.md) format into dictionary in memory.
-* Generates single HTML report per benchmark group.
 * Processes single CSV file or all CSV files in directory.
 * Can also process single concatenated CSV file with multiple benchmark groups.
 * Plots six graphs for the Celero measurements: *Baseline*, *us/Iteration*, *Iterations/sec*, *Min (us)*, *Max (us)*, *Mean (us)*.
 * Plots the graphs in 2x3 grid layout.
 * Plots bar charts only.
 * Adds single [Bokeh toolbar](http://bokeh.pydata.org/en/latest/docs/user_guide/tools.html) at the top of HTML page.
+* Generates single HTML report per benchmark group (outputs HTML files in the current directory).
+* Generates `index.html` file with linking all generated individual reports.
 * Is dead simple to modify, customise and extend.
 
 ### Features Plan
