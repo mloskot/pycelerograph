@@ -33,7 +33,7 @@ See the [example](https://mloskot.github.io/pycelerograph/example/) for sample H
 * Plots bar charts only.
 * Adds single [Bokeh toolbar](http://bokeh.pydata.org/en/latest/docs/user_guide/tools.html) at the top of HTML page.
 * Generates single HTML report per benchmark group (outputs HTML files in the current directory).
-* Generates `index.html` file with linking all generated individual reports.
+* Generates [index.html](https://mloskot.github.io/string_benchmark/results/index.html) file with linking all generated individual reports.
 * Is dead simple to modify, customise and extend.
 
 ### Features Plan
