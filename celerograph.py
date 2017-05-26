@@ -149,8 +149,8 @@ def generate_html_reports(data, show_html=False):
     for group_name, group in data.items():
         csv_file = group['file']
         html_file = os.path.splitext(csv_file)[0]
-        if not html_file.endswith(group_name):
-            html_file += group_name
+        if group_name not in html_file:  # poor man attempt to avoid group name dups
+            html_file += '_' + group_name
         html_file += '.html'
 
         print('Generating HTML:', html_file)
