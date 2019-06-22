@@ -1,11 +1,12 @@
-# pycelerograph 0.1
+# pycelerograph 1.0
 
 Python utility to convert [Celero](https://github.com/DigitalInBlue/Celero) benchmark
 results to pretty [Bokeh](http://bokeh.pydata.org/) graphs.
 
 ## Prerequisites
 
-Locked to Bokeh 0.12.5 and numerous other dependencies and their versions.
+Bokeh 1.2.0 or later.
+
 See [requirements.txt](requirements.txt) for details.
 
 ## Quickstart
