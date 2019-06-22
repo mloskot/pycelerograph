@@ -1,7 +1,1 @@
-bokeh==0.12.5
-Jinja2==2.7
-pandas==0.20.0
-python-dateutil==2.1
-PyYAML==3.10
-six==1.5.2
-tornado==4.3
+bokeh>=1.2.0
