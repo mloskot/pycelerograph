@@ -21,8 +21,14 @@ import csv
 import os
 import sys
 from enum import Enum
-from bokeh.charts import Bar, output_file, reset_output, save, show
+from bokeh.io import output_file, reset_output, save, show
+from bokeh.models import ColumnDataSource, FactorRange
 from bokeh.layouts import gridplot
+from bokeh.palettes import Spectral10
+from bokeh.plotting import figure
+from bokeh.transform import factor_cmap
+
+CELERO_PLOT_HEIGHT=400
 
 class Column(Enum):
     """Columns in Celero benchmark results report.
@@ -114,31 +120,47 @@ def read_results(csv_file):
             assert series_sizes[1:] == series_sizes[:-1]
         return data
 
+def collect_experiments(group_name, experiments, measure):
+    """Aggregates results of experiments for given measure (e.g. Baseline, Mean, etc.)."""
+    data = {}
+    for experiment_name, experiment in experiments.items():
+        problem_space = experiment[Column.problem_space]
+        assert len(problem_space) == len(experiment[measure])
+        if 'sizes' not in data:
+            data['sizes'] = experiment[Column.problem_space]
+        if 'experiments' not in data:
+            data['experiments'] = []
+        data['experiments'].append(experiment_name)
+        if 'results' not in data:
+            data['results'] = []
+        data['results'].append(experiment[measure])
+    assert len(data['sizes']) == len(data['results'][0])
+    assert len(data['experiments']) == len(data['results'])
+    return data
+
 def plot_measure(group_name, experiments, measure):
     """Plots graph for single benchmark measurement of an experiment."""
-    exp_sizes = []
-    exp_names = []
-    exp_results = []
-    for experiment_name, experiment in experiments.items():
-        measures_count = len(experiment[Column.problem_space])
-        assert measures_count == len(experiment[measure])
-        exp_names.extend([experiment_name] * measures_count)
-        exp_sizes.extend(experiment[Column.problem_space])
-        exp_results.extend(experiment[measure])
-    assert len(exp_sizes) == len(exp_names) == len(exp_results)
-    data = {
-        'size': exp_sizes,
-        'experiment': exp_names,
-        measure.value: exp_results
-    }
-    plot = Bar(data, label='size', group='experiment', values=measure.value,
-               legend='top_left', bar_width=10,
-               title='Benchmark group: {0} - {1}'.format(
-                   group_name, measure.value),
-               xlabel='Problem space (size of input)',
-               ylabel=measure.value)
-    return plot
-
+    d = collect_experiments(group_name, experiments, measure)
+    assert len(d['sizes']) == len([r for r in zip(*d['results'])])
+    x = [ (str(s), e) for s in d['sizes'] for e in d['experiments'] ]
+    y = sum(zip(*d['results']), ()) # like an hstack
+    source = ColumnDataSource(data=dict(x=x, y=y))
+    title = 'Benchmark group: {0} - {1}'.format(group_name, measure.value)
+    p = figure(x_range=FactorRange(*x), plot_height=CELERO_PLOT_HEIGHT, title=title)
+    p.vbar(x='x', top='y', width=1, source=source,
+           fill_color=factor_cmap('x', palette=Spectral10, factors=d['experiments'], start=1))
+    p.legend.location = "top_left"
+    p.legend.orientation = "horizontal"
+    p.x_range.range_padding = 0.1
+    p.xaxis.axis_label = 'Problem space (size of input)'
+    p.xaxis.major_label_orientation = 'vertical'
+    #p.xaxis.major_label_text_font_size = '0pt' # turn off x-axis tick labels
+    p.xaxis.major_tick_line_color = None  # turn off x-axis major ticks
+    p.xaxis.minor_tick_line_color = None  # turn off x-axis minor ticks
+    p.xgrid.grid_line_color = None
+    p.y_range.start = 0
+    p.yaxis.axis_label = measure.value
+    return p
 
 def generate_html_reports(data, show_html=False):
     """Plots graphs with benchmark results.
@@ -154,9 +176,8 @@ def generate_html_reports(data, show_html=False):
         html_file += '.html'
 
         print('Generating HTML:', html_file)
-        output_file(
-            html_file, title="Benchmark results for '{}'".format(group_name))
         experiments = group['experiments']
+        #output_file(html_file, title="Benchmark results for '{}'".format(group_name))
         plots = [
             plot_measure(group_name, experiments, Column.baseline),
             plot_measure(group_name, experiments, Column.mean_time),
@@ -167,7 +188,7 @@ def generate_html_reports(data, show_html=False):
         ]
         html_files.append((os.path.basename(csv_file), group_name, html_file))
 
-        bokeh_obj = gridplot(plots, ncols=2, plot_width=600, plot_height=300)
+        bokeh_obj = gridplot(plots, ncols=2, plot_width=600, plot_height=CELERO_PLOT_HEIGHT)
         if show_html:
             show(bokeh_obj)
         else:
