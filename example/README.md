@@ -1,7 +1,8 @@
-# pycelerograph output example
+# pycelerograph example
 
-* Benchmark project: [string_benchmark](https://github.com/mloskot/string_benchmark/).
-* CSV file contains benchmark data generated for several C++ variants of `starts_with(string_a, string_b)` function.
-* HTML file contains bar plots for the measurements data.
+- CSV files contain sample data generated for two benchmarks:
+  - [string_benchmark](https://github.com/mloskot/string_benchmark/)
+  - [Boost.GIL](https://github.com/boostorg/gil/) benchmark of various pixel iteration and access techniques for calculating histogram.
+- HTML file contains bar plots for the benchmarks data.
 
-View sample report [here](https://mloskot.github.io/pycelerograph/example/report.html).
+View sample charts [here](https://mloskot.github.io/pycelerograph/example/index.html).
