@@ -20,13 +20,15 @@ The script does not merge any reports.
 import csv
 import os
 import sys
+from collections import OrderedDict
 from enum import Enum
+from bokeh.core.properties import value
 from bokeh.io import output_file, reset_output, save, show
 from bokeh.models import ColumnDataSource, FactorRange
-from bokeh.layouts import gridplot
-from bokeh.palettes import Spectral10
+from bokeh.layouts import column
+from bokeh.palettes import brewer
 from bokeh.plotting import figure
-from bokeh.transform import factor_cmap
+from bokeh.transform import dodge
 
 CELERO_PLOT_HEIGHT=400
 
@@ -80,7 +82,7 @@ def read_results(csv_file):
 
     with open(csv_file) as file:
         print('Reading CSV:', csv_file)
-        data = {}
+        data = OrderedDict()
         reader = csv.reader(file, skipinitialspace=True, quotechar="'")
         header = None
         for i, row in enumerate(reader):
@@ -95,12 +97,12 @@ def read_results(csv_file):
             group_name = row[0]
             if group_name not in data:
                 data[group_name] = {'file': os.path.basename(
-                    csv_file), 'experiments': {}}
+                    csv_file), 'experiments': OrderedDict()}
 
             experiments = data[group_name]['experiments']
             experiment_name = row[1]
             if experiment_name not in experiments:
-                experiments[experiment_name] = {}
+                experiments[experiment_name] = OrderedDict()
 
             experiment = experiments[experiment_name]
             for j, measure_name in enumerate(header[2:], 2):
@@ -122,44 +124,45 @@ def read_results(csv_file):
 
 def collect_experiments(group_name, experiments, measure):
     """Aggregates results of experiments for given measure (e.g. Baseline, Mean, etc.)."""
-    data = {}
-    for experiment_name, experiment in experiments.items():
+    data = OrderedDict()
+
+    for i, item in enumerate(experiments.items()):
+        experiment_name, experiment = item
         problem_space = experiment[Column.problem_space]
         assert len(problem_space) == len(experiment[measure])
         if 'sizes' not in data:
-            data['sizes'] = experiment[Column.problem_space]
-        if 'experiments' not in data:
-            data['experiments'] = []
-        data['experiments'].append(experiment_name)
-        if 'results' not in data:
-            data['results'] = []
-        data['results'].append(experiment[measure])
-    assert len(data['sizes']) == len(data['results'][0])
-    assert len(data['experiments']) == len(data['results'])
+            data['sizes'] = [str(s) for s in experiment[Column.problem_space]]
+        data[experiment_name] = experiment[measure]
+    assert len(data['sizes']) == len(data[experiment_name])
     return data
+
+def calculate_bars_offsets(bars_count, offset_step=0.05):
+    if bars_count % 2 == 0:
+        mid = int(bars_count / 2)
+        return [i * offset_step for i in range(-mid, mid + 2, 1)]
+    else:
+        mid = int(bars_count / 2)
+        return [i * offset_step for i in range(-mid, mid + 1, 1)]
 
 def plot_measure(group_name, experiments, measure):
     """Plots graph for single benchmark measurement of an experiment."""
     d = collect_experiments(group_name, experiments, measure)
-    assert len(d['sizes']) == len([r for r in zip(*d['results'])])
-    x = [ (str(s), e) for s in d['sizes'] for e in d['experiments'] ]
-    y = sum(zip(*d['results']), ()) # like an hstack
-    source = ColumnDataSource(data=dict(x=x, y=y))
-    title = 'Benchmark group: {0} - {1}'.format(group_name, measure.value)
-    p = figure(x_range=FactorRange(*x), plot_height=CELERO_PLOT_HEIGHT, title=title)
-    p.vbar(x='x', top='y', width=1, source=source,
-           fill_color=factor_cmap('x', palette=Spectral10, factors=d['experiments'], start=1))
-    p.legend.location = "top_left"
-    p.legend.orientation = "horizontal"
+    experiments_count = len([e for e in d.keys() if not e == 'sizes'])
+    bar_offsets = calculate_bars_offsets(experiments_count, offset_step=0.1)
+    bar_colors = brewer['Spectral'][experiments_count]
+    source = ColumnDataSource(data=d)
+    p = figure(x_range=d['sizes'], plot_height=CELERO_PLOT_HEIGHT, title='Benchmark group: {0} - {1}'.format(group_name, measure.value))
+    for i, experiment_name in enumerate([e for e in d.keys() if not e == 'sizes']):
+        x = dodge('sizes', bar_offsets[i], range=p.x_range)
+        p.vbar(x=x, top=experiment_name, width=0.05, source=source, color=bar_colors[i], legend=value(experiment_name))
+
+    p.y_range.start = 0
     p.x_range.range_padding = 0.1
     p.xaxis.axis_label = 'Problem space (size of input)'
-    p.xaxis.major_label_orientation = 'vertical'
-    #p.xaxis.major_label_text_font_size = '0pt' # turn off x-axis tick labels
-    p.xaxis.major_tick_line_color = None  # turn off x-axis major ticks
-    p.xaxis.minor_tick_line_color = None  # turn off x-axis minor ticks
-    p.xgrid.grid_line_color = None
-    p.y_range.start = 0
     p.yaxis.axis_label = measure.value
+    p.legend.location = "top_left"
+    p.legend.orientation = "horizontal"
+
     return p
 
 def generate_html_reports(data, show_html=False):
@@ -177,7 +180,7 @@ def generate_html_reports(data, show_html=False):
 
         print('Generating HTML:', html_file)
         experiments = group['experiments']
-        #output_file(html_file, title="Benchmark results for '{}'".format(group_name))
+        output_file(html_file, title="Benchmark results for '{}'".format(group_name))
         plots = [
             plot_measure(group_name, experiments, Column.baseline),
             plot_measure(group_name, experiments, Column.mean_time),
@@ -188,7 +191,7 @@ def generate_html_reports(data, show_html=False):
         ]
         html_files.append((os.path.basename(csv_file), group_name, html_file))
 
-        bokeh_obj = gridplot(plots, ncols=2, plot_width=600, plot_height=CELERO_PLOT_HEIGHT)
+        bokeh_obj = column(plots, sizing_mode="stretch_width")
         if show_html:
             show(bokeh_obj)
         else:
